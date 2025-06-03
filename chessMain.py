@@ -50,14 +50,21 @@ def main():
                     sq_selected = (row, col)
                     playerClicks.append(sq_selected) #append for both 1st and 2nd clicks
                 if len(playerClicks) == 2: #after 2nd click
-                    move = chessEngine.move(playerClicks[0], playerClicks[1], gs.board)
+                    # Check if this is an en passant move
+                    is_enpassant = False
+                    if gs.board[playerClicks[0][0]][playerClicks[0][1]][1] == 'p':  # If it's a pawn
+                        if playerClicks[1] == gs.enpassant_possible:  # If the end square is the en passant square
+                            is_enpassant = True
+                    
+                    move = chessEngine.move(playerClicks[0], playerClicks[1], gs.board, is_enpassant_move=is_enpassant)
                     print(move.get_chess_notation())
-                    if move in valid_moves:
-                        gs.make_move(move)
-                        move_made = True
-                        sq_selected = ()
-                        playerClicks = []
-                    else:
+                    for i in range(len(valid_moves)):
+                        if move == valid_moves[i]:
+                            gs.make_move(move)
+                            move_made = True
+                            sq_selected = ()
+                            playerClicks = []
+                    if not move_made:
                         playerClicks = [sq_selected]
             #key handlers
             elif e.type == p.KEYDOWN:
