@@ -112,6 +112,8 @@ class game_state():
                 else: #queenside
                     self.board[move.end_row][move.end_col - 2] = self.board[move.end_row][move.end_col + 1]  # move rook back to a file
                     self.board[move.end_row][move.end_col + 1] = '--'  # clear d file
+        self.checkmate = False
+        self.stalemate = False
             
             
                  

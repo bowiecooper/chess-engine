@@ -1,6 +1,7 @@
 #driver file - handles user input and displaying the current GameState object.
 import chessEngine
 import pygame as p
+import chessAI
 
 p.init()
 WIDTH = 512
@@ -35,13 +36,18 @@ def main():
     sq_selected = () #no square is selected initially - keeps track of last click of the user (tuple: (row, col))
     playerClicks = [] #keeps track of player clicks EX: move pawn up two spaces (two tuples: [6, 4), (4, 4)])
     game_over = False
+    player_one = True #If a human is playing white this is True
+    player_two = False
     
     while running:
+        human_turn = (gs.white_to_move and player_one) or (not gs.white_to_move and player_two)
+        
+        
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
-                if not game_over:
+                if not game_over and human_turn:
                     location = p.mouse.get_pos() #(x,y) location of the mouse
                     col = location[0] // SQ_SIZE 
                     row = location[1] // SQ_SIZE 
@@ -58,10 +64,12 @@ def main():
                             if playerClicks[1] == gs.enpassant_possible:  # If the end square is the en passant square
                                 is_enpassant = True
                         
+                        #check if this is a castling move
                         is_castle_move = False
                         if gs.board[playerClicks[0][0]][playerClicks[0][1]][1] == 'K':
                             if playerClicks[1] == (playerClicks[0][0], playerClicks[0][1] + 2) or playerClicks[1] == (playerClicks[0][0], playerClicks[0][1] - 2):
                                 is_castle_move = True
+                                
                         move = chessEngine.move(playerClicks[0], playerClicks[1], gs.board, is_enpassant_move=is_enpassant, is_castle_move=is_castle_move)
                         print(move.get_chess_notation())
                         for i in range(len(valid_moves)):
@@ -79,6 +87,7 @@ def main():
                     gs.undo_move()
                     move_made = True
                     animate = False
+                    game_over = False
                 if e.key == p.K_r:
                     gs = chessEngine.game_state()
                     valid_moves = gs.get_all_valid_moves()
@@ -86,7 +95,17 @@ def main():
                     player_clicks = []
                     move_made = False
                     animate = False
-                    
+                    game_over = False
+        
+        #AI move finder
+        if not game_over and not human_turn:
+            AI_move = chessAI.find_best_move(gs, valid_moves)
+            if AI_move is None:
+                AI_move = chessAI.find_random_move(valid_moves)
+            gs.make_move(AI_move)
+            move_made = True
+            animate = True
+        
         if move_made:
             if animate:
                 animate_move(gs.move_log[-1], screen, gs.board, clock)
